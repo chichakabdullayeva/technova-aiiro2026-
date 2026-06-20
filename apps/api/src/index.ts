@@ -34,6 +34,19 @@ app.use(helmet());
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
+import path from 'path';
+import fs from 'fs';
+
+// Serve built frontend as static files (for single-container Railway deploy)
+const publicPath = path.join(__dirname, '..', 'public');
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next();
+    res.sendFile(path.join(publicPath, 'index.html'));
+  });
+}
+
 // Health
 app.get('/api/health', (_, res) => res.json({ status: 'ok', service: 'kiber-dnt-api' }));
 
